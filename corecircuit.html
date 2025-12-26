@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Core Circuit Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    .container {
+      max-width: 500px;
+      padding: 30px;
+      border: 2px solid #333;
+      border-radius: 16px;
+      background: #1c1c1c;
+    }
+    h1 { margin-bottom: 10px; }
+    #phase { font-size: 1.5rem; margin: 12px 0; }
+    #exercise { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+    #timer { font-size: 4rem; margin: 15px 0; }
+    #round { font-size: 1.2rem; opacity: 0.9; }
+    button {
+      font-size: 1.2rem;
+      padding: 10px 18px;
+      margin: 8px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #start { background: #28a745; color: white; }
+    #pause { background: #ffc107; color: black; }
+    #reset { background: #dc3545; color: white; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Core Circuit Timer</h1>
+    <div id="round">Round: 0 / 2</div>
+    <div id="phase">Ready</div>
+    <div id="exercise">Press Start</div>
+    <div id="timer">00</div>
+
+    <button id="start">Start</button>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <script>
+    // SETTINGS
+    const WORK_TIME = 45;
+    const REST_TIME = 15;
+    const TOTAL_ROUNDS = 2;
+
+    // Exercise list (including obliques 2x per side)
+    const baseExercises = [
+      "Toe Touches",
+      "Russian Twist",
+      "Superman",
+      "Obliques - Right",
+      "Obliques - Left",
+      "Obliques - Right",
+      "Obliques - Left",
+      "Plank",
+      "Flutter Kicks",
+      "Bridge",
+      "Scullers",
+      "Skydivers",
+      "Bicycles"
+    ];
+
+    // Build the full workout (2 rounds)
+    const workout = [];
+    for (let r = 1; r <= TOTAL_ROUNDS; r++) {
+      baseExercises.forEach(ex => workout.push({ round: r, name: ex }));
+    }
+
+    // STATE
+    let currentIndex = 0;
+    let timeLeft = WORK_TIME;
+    let interval = null;
+    let phase = "WORK"; // WORK or REST
+    let running = false;
+
+    // UI
+    const roundEl = document.getElementById("round");
+    const phaseEl = document.getElementById("phase");
+    const exerciseEl = document.getElementById("exercise");
+    const timerEl = document.getElementById("timer");
+
+    function beep() {
+      // Simple beep sound using Web Audio API
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      oscillator.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.12);
+    }
+
+    function updateUI() {
+      if (currentIndex >= workout.length) {
+        phaseEl.textContent = "DONE ✅";
+        exerciseEl.textContent = "Great job!";
+        timerEl.textContent = "00";
+        roundEl.textContent = `Round: ${TOTAL_ROUNDS} / ${TOTAL_ROUNDS}`;
+        return;
+      }
+
+      const current = workout[currentIndex];
+      roundEl.textContent = `Round: ${current.round} / ${TOTAL_ROUNDS}`;
+      phaseEl.textContent = phase === "WORK" ? "WORK 💪" : "REST 🧘";
+      exerciseEl.textContent = current.name;
+      timerEl.textContent = String(timeLeft).padStart(2, "0");
+    }
+
+    function nextPhaseOrExercise() {
+      beep();
+
+      if (phase === "WORK") {
+        phase = "REST";
+        timeLeft = REST_TIME;
+      } else {
+        // Moving to next exercise
+        phase = "WORK";
+        currentIndex++;
+        timeLeft = WORK_TIME;
+      }
+      updateUI();
+    }
+
+    function tick() {
+      if (!running) return;
+
+      timeLeft--;
+      updateUI();
+
+      if (timeLeft <= 0) {
+        if (currentIndex >= workout.length) {
+          stopTimer();
+          return;
+        }
+        nextPhaseOrExercise();
+      }
+    }
+
+    function startTimer() {
+      if (currentIndex >= workout.length) return;
+      if (running) return;
+      running = true;
+      if (!interval) interval = setInterval(tick, 1000);
+      updateUI();
+    }
+
+    function pauseTimer() {
+      running = false;
+    }
+
+    function stopTimer() {
+      running = false;
+      clearInterval(interval);
+      interval = null;
+    }
+
+    function resetTimer() {
+      stopTimer();
+      currentIndex = 0;
+      phase = "WORK";
+      timeLeft = WORK_TIME;
+      updateUI();
+    }
+
+    document.getElementById("start").addEventListener("click", startTimer);
+    document.getElementById("pause").addEventListener("click", pauseTimer);
+    document.getElementById("reset").addEventListener("click", resetTimer);
+
+    updateUI();
+  </script>
+</body>
+</html>
