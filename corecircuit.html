@@ -45,9 +45,10 @@
 <body>
   <div class="container">
     <h1>Core Circuit Timer</h1>
-    <div id="round">Round: 0 / 2</div>
+    <div id="round">Exercise: 0 / 13</div>
     <div id="phase">Ready</div>
     <div id="exercise">Press Start</div>
+    <div id="nextExercise" style="font-size: 1.2rem; margin: 10px 0; opacity: 0.8;"></div>
     <div id="timer">00</div>
 
     <button id="start">Start</button>
@@ -59,7 +60,7 @@
     // SETTINGS
     const WORK_TIME = 45;
     const REST_TIME = 15;
-    const TOTAL_ROUNDS = 2;
+    const TOTAL_ROUNDS = 1;
 
     // Exercise list (including obliques 2x per side)
     const baseExercises = [
@@ -78,7 +79,7 @@
       "Bicycles"
     ];
 
-    // Build the full workout (2 rounds)
+    // Build the full workout (1 round)
     const workout = [];
     for (let r = 1; r <= TOTAL_ROUNDS; r++) {
       baseExercises.forEach(ex => workout.push({ round: r, name: ex }));
@@ -95,6 +96,7 @@
     const roundEl = document.getElementById("round");
     const phaseEl = document.getElementById("phase");
     const exerciseEl = document.getElementById("exercise");
+    const nextExerciseEl = document.getElementById("nextExercise");
     const timerEl = document.getElementById("timer");
 
     function beep() {
@@ -112,15 +114,25 @@
       if (currentIndex >= workout.length) {
         phaseEl.textContent = "DONE ✅";
         exerciseEl.textContent = "Great job!";
+        nextExerciseEl.textContent = "";
         timerEl.textContent = "00";
-        roundEl.textContent = `Round: ${TOTAL_ROUNDS} / ${TOTAL_ROUNDS}`;
+        roundEl.textContent = `Exercise: ${workout.length} / ${workout.length}`;
         return;
       }
 
       const current = workout[currentIndex];
-      roundEl.textContent = `Round: ${current.round} / ${TOTAL_ROUNDS}`;
+      roundEl.textContent = `Exercise: ${currentIndex + 1} / ${workout.length}`;
       phaseEl.textContent = phase === "WORK" ? "WORK 💪" : "REST 🧘";
       exerciseEl.textContent = current.name;
+      
+      // Show next exercise during REST phase
+      if (phase === "REST" && currentIndex + 1 < workout.length) {
+        const next = workout[currentIndex + 1];
+        nextExerciseEl.textContent = `Next: ${next.name}`;
+      } else {
+        nextExerciseEl.textContent = "";
+      }
+      
       timerEl.textContent = String(timeLeft).padStart(2, "0");
     }
 
